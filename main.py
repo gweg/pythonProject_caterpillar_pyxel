@@ -2,7 +2,7 @@
 import pyxel
 import random
 import subprocess
-import pygame
+import pygame # to play map3 only
 
 pygame.mixer.init(22050)
 sound_apple_crunch = pygame.mixer.Sound("assets//BitePotato.mp3")
@@ -62,7 +62,8 @@ class Caterpillar():
         self.growing=False
         self.dead=False
         self.timeToDie = -1
-
+        self.alive=True
+        self.death_delay=10 #
         # creation de la tête de la chenille ( qui est un anneau de type tete de  chenille )
 
         ring=Ring() # on cree un nouvel anneau
@@ -71,6 +72,16 @@ class Caterpillar():
         ring.ringType=RingType.head #on definit cet anneau comme anneau de type tête
         self.rings.append(ring) # on ajout ce nouveal anneau à la liste de anneau de la chenille
 
+    def death(self):
+
+
+        if self.dead==False:
+            if self.death_delay==0:
+                self.rings = self.rings[:-1]
+                self.death_delay=10
+                if len(self.rings)<2:
+                    self.dead=True
+            self.death_delay -=1
 
     def update(self):
 
@@ -113,8 +124,7 @@ class Caterpillar():
             self.rings[0].xpos += 1
         # la tête rencontre un élément:
 
-    def play_mp3(self,path):
-        subprocess.Popen(['mpg123', '-q', "C:/Users/greg/PycharmProjects/pythonProject_caterpillar_pyxel/assets/BitePotato.mp3"]).wait()
+
 
     def HeadDetectElement(self,world_cases):
         # detection de la chenille qui va sur un élément environnant
@@ -128,20 +138,22 @@ class Caterpillar():
                     # on ouvre la bouche
                     self.rings[0].ringType = RingType.opennedMouthHead
                     sound_apple_crunch.play()
-                    break
+                    return 10# score point
                 else: # sinon la bouche est fermée
                     self.rings[0].ringType = RingType.head
 
                 if case.code==Case_Code.wall: # dans le mur !!!
-                    self.dead=True
-
+                    self.caterpillar.alive==False
+                # recontre un virus
                 if case.code==Case_Code.virus:
-                    self.dead=True
-
+                    self.caterpillar.alive==False
+                # tete triste
                 if self.dead==True:
                     self.rings[0].ringType=RingType.sadHead
                     self.timeToDie=10
-                    break
+                    self.alive=False
+                    return 0
+        return 0
         # detection de la chenille qui se mange le corps... ^^
         for ring in self.rings:
             if ring.xpos==self.rings[0].xpos and ring.ypos==self.rings[0].ypos:
@@ -209,13 +221,13 @@ class CaterpillarApp():
     caterpillar = None
     def __init__(self):
 
-
+        self.score = 0
 
         pyxel.init(255,255,scale=2,caption="caterpillar",fps=60)
         pyxel.load("assets/my_resource.pyxres")
         self.things=Things(0,0)
 
-        self.ticForNextFrame=30
+        self.ticForNextFrame=10
 
 
         """ on calcul le nombre de cases à l'écran en fonction de la résolution de la fenetre du jeu """
@@ -234,6 +246,8 @@ class CaterpillarApp():
 
     def update(self):
 
+        if self.caterpillar.alive==False:
+            self.caterpillar.death()
         if self.caterpillar.dead == True:
             self.caterpillar.direction=Directions.none
 
@@ -254,8 +268,9 @@ class CaterpillarApp():
         if self.ticForNextFrame==0:
             self.caterpillar.update()
 
-            self.ticForNextFrame=30
-            self.caterpillar.HeadDetectElement(self.world.cases)
+            self.ticForNextFrame=10
+            # head collision
+            self.score=self.score+self.caterpillar.HeadDetectElement(self.world.cases)
 
 
             '''
@@ -273,7 +288,9 @@ class CaterpillarApp():
 
         # dessin de tous les éléménts du jeu : chenille + autres sujets + décor
         self.world.draw(self.caterpillar.rings)
-        pyxel.text(55, 41, "CATERPILLAR GAME!", pyxel.frame_count % 16)
+        pyxel.text(10, 4, "CATERPILLAR GAME!", pyxel.frame_count % 16)
+        pyxel.text(100, 4, "SCORE :"+str(self.score),pyxel.frame_count % 16)
+
 
 
 CaterpillarApp()
