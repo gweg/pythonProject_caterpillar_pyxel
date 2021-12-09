@@ -1,5 +1,12 @@
+
 import pyxel
 import random
+import subprocess
+import pygame
+
+pygame.mixer.init(22050)
+sound_apple_crunch = pygame.mixer.Sound("assets//BitePotato.mp3")
+
 
 class Things():
     def __init__(self,x,y):
@@ -106,16 +113,21 @@ class Caterpillar():
             self.rings[0].xpos += 1
         # la tête rencontre un élément:
 
+    def play_mp3(self,path):
+        subprocess.Popen(['mpg123', '-q', "C:/Users/greg/PycharmProjects/pythonProject_caterpillar_pyxel/assets/BitePotato.mp3"]).wait()
+
     def HeadDetectElement(self,world_cases):
         # detection de la chenille qui va sur un élément environnant
         for case in world_cases:
             if case.xpos==self.rings[0].xpos and case.ypos==self.rings[0].ypos:
                 # si on mange une pomme
+                # eat an apple
                 if case.code==Case_Code.apple:
                     self.growing=True
                     case.code=Case_Code.background
                     # on ouvre la bouche
                     self.rings[0].ringType = RingType.opennedMouthHead
+                    sound_apple_crunch.play()
                     break
                 else: # sinon la bouche est fermée
                     self.rings[0].ringType = RingType.head
@@ -196,6 +208,9 @@ class CaterpillarApp():
     """ use as static object """
     caterpillar = None
     def __init__(self):
+
+
+
         pyxel.init(255,255,scale=2,caption="caterpillar",fps=60)
         pyxel.load("assets/my_resource.pyxres")
         self.things=Things(0,0)
