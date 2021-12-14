@@ -60,10 +60,12 @@ class Caterpillar():
         self.size=rings_nb
         self.direction=Directions.south
         self.growing=False
-        self.dead=False
+
         self.timeToDie = -1
-        self.alive=True
-        self.death_delay=10 #
+        self.alive=True # to start dead timer
+        self.dead=False # to go to game over
+        self.death_delay=0 #
+
         # creation de la tête de la chenille ( qui est un anneau de type tete de  chenille )
 
         ring=Ring() # on cree un nouvel anneau
@@ -75,15 +77,18 @@ class Caterpillar():
     def death(self):
 
 
-        if self.dead==False:
+        if self.alive==False:
             if self.death_delay==0:
-                self.rings = self.rings[:-1]
-                self.death_delay=10
+                self.death_delay=5
                 if len(self.rings)<2:
                     self.dead=True
+                else:
+                    self.rings = self.rings[:-1]
             self.death_delay -=1
 
     def update(self):
+        if self.alive==False:
+            self.death()
 
         # agrandissement de la chenille ? : si oui on ajoute un anneau de plus à la queue de la chenille
         if self.growing:
@@ -141,14 +146,14 @@ class Caterpillar():
                     return 10# score point
                 else: # sinon la bouche est fermée
                     self.rings[0].ringType = RingType.head
-
+                # collision with the wall
                 if case.code==Case_Code.wall: # dans le mur !!!
-                    self.caterpillar.alive==False
+                    self.alive=False
                 # recontre un virus
                 if case.code==Case_Code.virus:
-                    self.caterpillar.alive==False
+                    self.alive=False
                 # tete triste
-                if self.dead==True:
+                if self.alive==False:
                     self.rings[0].ringType=RingType.sadHead
                     self.timeToDie=10
                     self.alive=False
@@ -158,7 +163,7 @@ class Caterpillar():
         for ring in self.rings:
             if ring.xpos==self.rings[0].xpos and ring.ypos==self.rings[0].ypos:
                 if ring.ringType == RingType.ring:
-                    self.dead=True
+                    self.alive=False
                     break
 
 
@@ -246,10 +251,10 @@ class CaterpillarApp():
 
     def update(self):
 
-        if self.caterpillar.alive==False:
-            self.caterpillar.death()
-        if self.caterpillar.dead == True:
-            self.caterpillar.direction=Directions.none
+        # check if caterpillar is still alive
+        if not self.caterpillar.alive:
+            self.caterpillar.death() # start deathing
+
 
         # gestion du clavier.
         if pyxel.btnp(pyxel.KEY_Q):
@@ -263,6 +268,11 @@ class CaterpillarApp():
         if pyxel.btnp(pyxel.KEY_DOWN):
             self.caterpillar.direction = Directions.south
 
+        # if caterpillar is not still alive
+        if self.caterpillar.alive==False:
+            self.caterpillar.direction=Directions.none
+
+
         self.ticForNextFrame -= 1
 
         if self.ticForNextFrame==0:
@@ -270,7 +280,8 @@ class CaterpillarApp():
 
             self.ticForNextFrame=10
             # head collision
-            self.score=self.score+self.caterpillar.HeadDetectElement(self.world.cases)
+            if self.caterpillar.alive:
+                self.score=self.score+self.caterpillar.HeadDetectElement(self.world.cases)
 
 
             '''
