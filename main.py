@@ -173,7 +173,7 @@ class Caterpillar():
                     self.alive = False
                     return 0
         return 0
-        # detection de la chenille qui se mange le corps... ^^
+        # detection de la chenille qui se mange son propre corps... ^^
         for ring in self.rings:
             if ring.xpos == self.rings[0].xpos and ring.ypos == self.rings[0].ypos:
                 if ring.ringType == RingType.ring:
@@ -201,49 +201,71 @@ class World():
                 else:
                     case.code = Case_Code.background
                     self.cases.append(case)
+    def apple_count():
+        apple_count=0
+        for case in self.cases:
+            if case.code==Case_Code.apple:
+                apple_count+=1
+        return apple_count
 
     def elementsGenerate(self, case_code, rand_range):
-
+        element_count=0
         # on parcours toutes les cases du décor.
         for case in self.cases:
             if case.code == Case_Code.background:
                 if random.randint(1, rand_range) == 1:
                     case.code = case_code
+                    element_count+=1
+        return element_count
 
     def draw(self, caterpillar_rings):
         """ draw world """
         for case in self.cases:
+            pyxel.blt(case.xpos * self.casessize, case.ypos * self.casessize, 0, 0, 48, self.casessize,
+                          self.casessize)
             if case.code == Case_Code.wall:
                 pyxel.blt(case.xpos * self.casessize, case.ypos * self.casessize, 0, 0, 32, self.casessize,
-                          self.casessize)
-            if case.code == Case_Code.background:
-                pyxel.blt(case.xpos * self.casessize, case.ypos * self.casessize, 0, 0, 48, self.casessize,
-                          self.casessize)
+                          self.casessize,0)
             if case.code == Case_Code.apple:
                 pyxel.blt(case.xpos * self.casessize, case.ypos * self.casessize, 0, 0, 16, self.casessize,
-                          self.casessize)
+                          self.casessize,0)
             if case.code == Case_Code.virus:
                 pyxel.blt(case.xpos * self.casessize, case.ypos * self.casessize, 0, 32, 48, self.casessize,
-                          self.casessize)
+                          self.casessize,0)
         """ draw caterpillar"""
         for ring in caterpillar_rings:
             if ring.ringType == RingType.ring:
                 pyxel.blt(ring.xpos * self.casessize, ring.ypos * self.casessize, 0, 0, 0, self.casessize,
-                          self.casessize)
+                          self.casessize,0)
             if ring.ringType == RingType.head:
                 pyxel.blt(ring.xpos * self.casessize, ring.ypos * self.casessize, 0, 16, 0, self.casessize,
-                          self.casessize)
+                          self.casessize,0)
             if ring.ringType == RingType.sadHead:
                 pyxel.blt(ring.xpos * self.casessize, ring.ypos * self.casessize, 0, 16, 16, self.casessize,
-                          self.casessize)
+                          self.casessize,0)
             if ring.ringType == RingType.opennedMouthHead:
                 pyxel.blt(ring.xpos * self.casessize, ring.ypos * self.casessize, 0, 32, 0, self.casessize,
-                          self.casessize)
+                          self.casessize,0)
 
 
 class CaterpillarApp():
     """ use as static object """
     caterpillar = None
+    gameover = True
+
+
+    def init_game(self):
+        self.caterpillar = Caterpillar(int((255 / 16) / 2), int((255 / 16) / 2), 0)
+
+        """ on calcul le nombre de cases à l'écran en fonction de la résolution de la fenetre du jeu """
+        self.world = World(int(255 / 16), int(255 / 16), 16)
+
+        self.world.elementsGenerate(Case_Code.apple, 10)
+        self.world.elementsGenerate(Case_Code.virus, 30)
+
+        # la chenille grandie dès le début du jeu afin d'avoir au moins une tête et un anneau de corps.
+        self.caterpillar.growing = True
+        self.apple_count=0
 
     def __init__(self):
 
@@ -255,24 +277,16 @@ class CaterpillarApp():
 
         self.ticForNextFrame = 10
 
-        """ on calcul le nombre de cases à l'écran en fonction de la résolution de la fenetre du jeu """
-        self.world = World(int(255 / 16), int(255 / 16), 16)
+
         # création de la chenille avec au moins un anneau (la tête)
-        self.caterpillar = Caterpillar(int((255 / 16) / 2), int((255 / 16) / 2), 0)
 
-        self.world.elementsGenerate(Case_Code.apple, 10)
-        self.world.elementsGenerate(Case_Code.virus, 30)
-
-        # la chenille grandie dès le début du jeu afin d'avoir au moins une tête et un anneau de corps.
-        self.caterpillar.growing = True
+        self.init_game()
 
         pyxel.run(self.update, self.draw)
 
     def update(self):
 
-        # check if caterpillar is still alive
-        if not self.caterpillar.alive:
-            self.caterpillar.death()  # start deathing
+
 
         # gestion du clavier.
         if pyxel.btnp(pyxel.KEY_Q):
@@ -286,28 +300,53 @@ class CaterpillarApp():
         if pyxel.btnp(pyxel.KEY_DOWN):
             self.caterpillar.direction = Directions.south
 
-        # if caterpillar is not still alive
-        if self.caterpillar.alive == False:
-            self.caterpillar.direction = Directions.none
+        if pyxel.btnp(pyxel.KEY_SPACE):
 
-        self.ticForNextFrame -= 1
+            self.gameover = False
 
-        if self.ticForNextFrame == 0:
-            self.caterpillar.update()
 
-            self.ticForNextFrame = 10
-            # head collision
-            if self.caterpillar.alive:
-                self.score = self.score + self.caterpillar.HeadDetectElement(self.world.cases)
-        if self.caterpillar.dead:
-            pyxel.quit()
-            '''
-        if self.caterpillar.dead==True:
-            for i in range(1,100):
+        if not self.gameover:
+
+            # check if caterpillar is still alive
+            if not self.caterpillar.alive:
+                self.caterpillar.death()  # start deathing
+
+            # if caterpillar is not still alive
+            if self.caterpillar.alive == False:
+                self.caterpillar.direction = Directions.none
+
+            self.ticForNextFrame -= 1
+
+            if self.world.apple_count==0:
+                self.gameover = True
+                self.caterpillar.alive = False
+                self.init_game()
+
+
+
+            if self.ticForNextFrame == 0:
                 self.caterpillar.update()
-                self.draw()
-            pyxel.quit()
-        '''
+
+                self.ticForNextFrame = 10
+                # head collision
+                if self.caterpillar.alive:
+                    self.score = self.score + self.caterpillar.HeadDetectElement(self.world.cases)
+            if self.caterpillar.dead:
+
+                self.gameover=True
+                self.caterpillar.alive=False
+                self.init_game()
+                #pyxel.quit()
+                '''
+            if self.caterpillar.dead==True:
+                for i in range(1,100):
+                    self.caterpillar.update()
+                    self.draw()
+                pyxel.quit()
+            '''
+        else:
+            pass
+
 
     def draw(self):
         pyxel.cls(0)
@@ -315,8 +354,13 @@ class CaterpillarApp():
 
         # dessin de tous les éléménts du jeu : chenille + autres sujets + décor
         self.world.draw(self.caterpillar.rings)
-        pyxel.text(10, 4, "CATERPILLAR GAME!", pyxel.frame_count % 16)
-        pyxel.text(100, 4, "SCORE :" + str(self.score), pyxel.frame_count % 16)
+        if self.gameover:
+            pyxel.text(85, 30, "CATERPILLAR GAME!", 7)
+            pyxel.text(80, 40, "PRESS A KEY TO START!", pyxel.frame_count % 16)
+        else:
+
+
+            pyxel.text(100, 4, "SCORE :" + str(self.score), 7)
 
 
 CaterpillarApp()
