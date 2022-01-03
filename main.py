@@ -133,6 +133,12 @@ class Caterpillar():
 
         if self.alive == False:
             self.death()
+    # caterpillar collision with himself ? (except with the head)
+    def ringscollision(self,rings):
+        for ring in rings:
+            if (rings[0].xpos==ring.xpos and rings[0].ypos==ring.ypos and ring.ringType!=RingType.head):
+                return True
+        return False
 
 
 
@@ -153,7 +159,9 @@ class Caterpillar():
                 else:  # sinon la bouche est fermée
                     self.rings[0].ringType = RingType.head
                 # collision with the wall
-                if case.code == Case_Code.wall:  # dans le mur !!!
+                if case.code == Case_Code.wall:  # dans le mur !
+                    self.alive = False
+                if self.ringscollision(self.rings):  # dans lui même !
                     self.alive = False
                 # recontre un virus
                 if case.code == Case_Code.virus:
