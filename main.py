@@ -201,7 +201,7 @@ class World():
                 else:
                     case.code = Case_Code.background
                     self.cases.append(case)
-    def apple_count():
+    def get_apple_count(self):
         apple_count=0
         for case in self.cases:
             if case.code==Case_Code.apple:
@@ -317,13 +317,6 @@ class CaterpillarApp():
 
             self.ticForNextFrame -= 1
 
-            if self.world.apple_count==0:
-                self.gameover = True
-                self.caterpillar.alive = False
-                self.init_game()
-
-
-
             if self.ticForNextFrame == 0:
                 self.caterpillar.update()
 
@@ -331,6 +324,12 @@ class CaterpillarApp():
                 # head collision
                 if self.caterpillar.alive:
                     self.score = self.score + self.caterpillar.HeadDetectElement(self.world.cases)
+
+            if self.world.get_apple_count() == 0:
+                self.gameover = True
+                self.caterpillar.alive = False
+                self.init_game()
+
             if self.caterpillar.dead:
 
                 self.gameover=True
