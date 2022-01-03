@@ -255,6 +255,10 @@ class CaterpillarApp():
 
 
     def init_game(self):
+
+        self.score = 0
+
+        # création de la chenille avec au moins un anneau (la tête)
         self.caterpillar = Caterpillar(int((255 / 16) / 2), int((255 / 16) / 2), 0)
 
         """ on calcul le nombre de cases à l'écran en fonction de la résolution de la fenetre du jeu """
@@ -269,16 +273,11 @@ class CaterpillarApp():
 
     def __init__(self):
 
-        self.score = 0
-
+        # init game engine
         pyxel.init(255, 255, scale=2, caption="caterpillar", fps=60)
         pyxel.load("assets/my_resource.pyxres")
         self.things = Things(0, 0)
-
         self.ticForNextFrame = 10
-
-
-        # création de la chenille avec au moins un anneau (la tête)
 
         self.init_game()
 
@@ -324,7 +323,7 @@ class CaterpillarApp():
                 # head collision
                 if self.caterpillar.alive:
                     self.score = self.score + self.caterpillar.HeadDetectElement(self.world.cases)
-
+            # All the apples have been eaten
             if self.world.get_apple_count() == 0:
                 self.gameover = True
                 self.caterpillar.alive = False
@@ -336,13 +335,6 @@ class CaterpillarApp():
                 self.caterpillar.alive=False
                 self.init_game()
                 #pyxel.quit()
-                '''
-            if self.caterpillar.dead==True:
-                for i in range(1,100):
-                    self.caterpillar.update()
-                    self.draw()
-                pyxel.quit()
-            '''
         else:
             pass
 
